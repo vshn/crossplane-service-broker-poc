@@ -8,7 +8,7 @@ import (
 )
 
 var notImplemented = APIError{
-	code: http.StatusNotFound,
+	code: http.StatusNotImplemented,
 	err: apiresponses.ErrorResponse{
 		Error:       "API not implemented",
 		Description: "API not implemented",

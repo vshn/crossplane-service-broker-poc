@@ -48,7 +48,7 @@ func TestAPI_NotImplementedEndpoint(t *testing.T) {
 
 	res, err := http.Get(url + "/custom/service_instances/test/usage")
 	assert.NoError(t, err)
-	assert.Equal(t, http.StatusNotFound, res.StatusCode)
+	assert.Equal(t, http.StatusNotImplemented, res.StatusCode)
 	assert.Equal(t, res.Header.Get("Content-Type"), "application/json")
 
 	notImplemented := struct {

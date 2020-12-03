@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"code.cloudfoundry.org/lager"
 	helmv1alpha1 "github.com/crossplane-contrib/provider-helm/apis/release/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composite"
 	"github.com/crossplane/crossplane/apis/apiextensions/v1beta1"
+	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -17,8 +19,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const helmHaProxyRelease = "haproxy"
-const spksNamespace = "spks-crossplane"
+const (
+	helmHaProxyRelease = "haproxy"
+	spksNamespace      = "spks-crossplane"
+)
+
+var (
+	// ErrNotImplemented is the error returned for not implmemented functions
+	ErrNotImplemented = apiresponses.
+		NewFailureResponseBuilder(
+			errors.New("not implemented"),
+			http.StatusNotImplemented,
+			"not-implemented").
+		WithErrorKey("NotImplemented").
+		Build()
+)
 
 // ErrInstanceNotReady is returned if credentials are fetched for an instance which is still provisioning.
 var ErrInstanceNotReady = errors.New("instance not ready")

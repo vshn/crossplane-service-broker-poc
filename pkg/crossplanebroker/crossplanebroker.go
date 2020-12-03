@@ -3,6 +3,7 @@ package crossplanebroker
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"broker/pkg/crossplane"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/middlewares"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // CrossplaneBroker implements the Crossplane service broker
@@ -47,11 +49,11 @@ func (b *CrossplaneBroker) Provision(ctx context.Context, instanceID string, det
 
 	plan, err := b.c.GetPlan(ctx, details.PlanID)
 	if err != nil {
-		return spec, errors.New("plan_id not recognized")
+		return spec, convertError(ctx, err)
 	}
 
 	if instance, exists, err := b.c.InstanceExists(ctx, instanceID, plan); err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	} else if exists {
 		if instance.GetLabels()[crossplane.PlanNameLabel] == plan.Labels[crossplane.PlanNameLabel] {
 			// To avoid having to compare parameters,
@@ -67,7 +69,7 @@ func (b *CrossplaneBroker) Provision(ctx context.Context, instanceID string, det
 
 	err = b.c.CreateInstance(ctx, instanceID, details.RawParameters, plan)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 
 	return domain.ProvisionedServiceSpec{
@@ -84,12 +86,12 @@ func (b *CrossplaneBroker) Deprovision(ctx context.Context, instanceID string, d
 
 	plan, err := b.c.GetPlan(ctx, details.PlanID)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 
 	instance, exists, err := b.c.InstanceExists(ctx, instanceID, plan)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 	if !exists {
 		return spec, apiresponses.ErrInstanceDoesNotExist
@@ -97,14 +99,14 @@ func (b *CrossplaneBroker) Deprovision(ctx context.Context, instanceID string, d
 
 	sb, err := crossplane.ServiceBinderFactory(b.c, instance, logger)
 	if err != nil {
-		return domain.DeprovisionServiceSpec{}, err
+		return spec, convertError(ctx, err)
 	}
 	if err := sb.Deprovision(ctx); err != nil {
-		return domain.DeprovisionServiceSpec{}, err
+		return spec, convertError(ctx, err)
 	}
 
 	if err := b.c.DeleteInstance(ctx, instance.GetName(), plan); err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 
 	return domain.DeprovisionServiceSpec{
@@ -123,12 +125,12 @@ func (b *CrossplaneBroker) Bind(ctx context.Context, instanceID, bindingID strin
 
 	plan, err := b.c.GetPlan(ctx, details.PlanID)
 	if err != nil {
-		return spec, errors.New("plan_id not recognized")
+		return spec, convertError(ctx, err)
 	}
 
 	instance, exists, err := b.c.InstanceExists(ctx, instanceID, plan)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	} else if !exists {
 		return spec, apiresponses.ErrInstanceDoesNotExist
 	}
@@ -139,16 +141,16 @@ func (b *CrossplaneBroker) Bind(ctx context.Context, instanceID, bindingID strin
 
 	sb, err := crossplane.ServiceBinderFactory(b.c, instance, logger)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 
 	if err := sb.FinishProvision(ctx); err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 
 	creds, err := sb.Bind(ctx, bindingID)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 
 	spec.Credentials = creds
@@ -167,19 +169,19 @@ func (b *CrossplaneBroker) Unbind(ctx context.Context, instanceID, bindingID str
 
 	plan, err := b.c.GetPlan(ctx, details.PlanID)
 	if err != nil {
-		return spec, errors.New("plan_id not recognized")
+		return spec, convertError(ctx, err)
 	}
 
 	instance, exists, err := b.c.InstanceExists(ctx, instanceID, plan)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	} else if !exists {
 		return spec, apiresponses.ErrInstanceDoesNotExist
 	}
 
 	sb, err := crossplane.ServiceBinderFactory(b.c, instance, logger)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 
 	return spec, sb.Unbind(ctx, bindingID)
@@ -195,7 +197,7 @@ func (b *CrossplaneBroker) LastOperation(ctx context.Context, instanceID string,
 		if errors.Is(err, crossplane.ErrInstanceNotFound) {
 			err = apiresponses.ErrInstanceDoesNotExist
 		}
-		return domain.LastOperation{}, err
+		return domain.LastOperation{}, convertError(ctx, err)
 	}
 
 	condition := instance.GetCondition(v1alpha1.TypeReady)
@@ -207,11 +209,11 @@ func (b *CrossplaneBroker) LastOperation(ctx context.Context, instanceID string,
 		op.State = domain.Succeeded
 		sb, err := crossplane.ServiceBinderFactory(b.c, instance, logger)
 		if err != nil {
-			return domain.LastOperation{}, err
+			return domain.LastOperation{}, convertError(ctx, err)
 		}
 		logger.Info("finish-provision")
 		if err := sb.FinishProvision(ctx); err != nil {
-			return domain.LastOperation{}, err
+			return domain.LastOperation{}, convertError(ctx, err)
 		}
 	case v1alpha1.ReasonCreating:
 		op.State = domain.InProgress
@@ -226,7 +228,7 @@ func (b *CrossplaneBroker) Update(ctx context.Context, instanceID string, detail
 	logger := requestScopedLogger(ctx, b.logger).WithData(lager.Data{"instance-id": instanceID})
 	logger.Info("update-service-instance", lager.Data{"plan-id": details.PlanID, "service-id": details.ServiceID})
 
-	return domain.UpdateServiceSpec{}, errors.New("not implemented")
+	return domain.UpdateServiceSpec{}, crossplane.ErrNotImplemented
 }
 
 // GetBinding returns a previously created binding
@@ -241,7 +243,7 @@ func (b *CrossplaneBroker) GetBinding(ctx context.Context, instanceID, bindingID
 		if errors.Is(err, crossplane.ErrInstanceNotFound) {
 			err = apiresponses.ErrInstanceDoesNotExist
 		}
-		return domain.GetBindingSpec{}, err
+		return domain.GetBindingSpec{}, convertError(ctx, err)
 	}
 
 	if instance.GetCondition(v1alpha1.TypeReady).Status != corev1.ConditionTrue {
@@ -250,12 +252,12 @@ func (b *CrossplaneBroker) GetBinding(ctx context.Context, instanceID, bindingID
 
 	sb, err := crossplane.ServiceBinderFactory(b.c, instance, logger)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 
 	creds, err := sb.GetBinding(ctx, bindingID)
 	if err != nil {
-		return spec, err
+		return spec, convertError(ctx, err)
 	}
 
 	spec.Credentials = creds
@@ -273,7 +275,7 @@ func (b *CrossplaneBroker) GetInstance(ctx context.Context, instanceID string) (
 		if errors.Is(err, crossplane.ErrInstanceNotFound) {
 			err = apiresponses.ErrInstanceDoesNotExist
 		}
-		return domain.GetInstanceDetailsSpec{}, err
+		return domain.GetInstanceDetailsSpec{}, convertError(ctx, err)
 	}
 
 	spec := domain.GetInstanceDetailsSpec{
@@ -289,7 +291,7 @@ func (b *CrossplaneBroker) LastBindingOperation(ctx context.Context, instanceID,
 	logger := requestScopedLogger(ctx, b.logger).WithData(lager.Data{"instance-id": instanceID, "binding-id": bindingID})
 	logger.Info("last-binding-operation", lager.Data{"operation-data": details.OperationData, "plan-id": details.PlanID, "service-id": details.ServiceID})
 
-	return domain.LastOperation{}, errors.New("not implemented")
+	return domain.LastOperation{}, crossplane.ErrNotImplemented
 }
 
 func requestScopedLogger(ctx context.Context, logger lager.Logger) lager.Logger {
@@ -299,4 +301,24 @@ func requestScopedLogger(ctx context.Context, logger lager.Logger) lager.Logger 
 	}
 
 	return logger.WithData(lager.Data{"correlation-id": id})
+}
+
+func convertError(ctx context.Context, err error) error {
+	var kErr *k8serrors.StatusError
+	if errors.As(err, &kErr) {
+		err = apiresponses.NewFailureResponseBuilder(
+			kErr,
+			int(kErr.ErrStatus.Code),
+			"invalid",
+		).WithErrorKey(string(kErr.ErrStatus.Reason)).Build()
+	}
+	id, ok := ctx.Value(middlewares.CorrelationIDKey).(string)
+	if !ok {
+		id = "unknown"
+	}
+	var apiErr *apiresponses.FailureResponse
+	if errors.As(err, &apiErr) {
+		return apiErr.AppendErrorMessage(fmt.Sprintf("(correlation-id: %q)", id))
+	}
+	return fmt.Errorf("%w (correlation-id: %q)", err, id)
 }

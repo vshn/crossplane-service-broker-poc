@@ -74,5 +74,5 @@ func createAPIHandler(objs []runtime.Object) *APIHandler {
 func TestAPIHandler_CreateUpdateServiceDefinition(t *testing.T) {
 	err := createAPIHandler([]runtime.Object{}).CreateUpdateServiceDefinition(context.Background(), &ServiceDefinitionRequest{})
 	assert.Error(t, err)
-	assert.EqualError(t, err, "API not implemented (http code 404)")
+	assert.EqualError(t, err, "API not implemented (http code 501)")
 }

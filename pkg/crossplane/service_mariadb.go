@@ -2,7 +2,6 @@ package crossplane
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -86,17 +85,17 @@ func (msb MariadbServiceBinder) Bind(_ context.Context, _ string) (Credentials, 
 
 // GetBinding is not implemented.
 func (msb MariadbServiceBinder) GetBinding(_ context.Context, _ string) (Credentials, error) {
-	return nil, errors.New("not implemented")
+	return nil, ErrNotImplemented
 }
 
 // Unbind is not implemented.
 func (msb MariadbServiceBinder) Unbind(_ context.Context, _ string) error {
-	return errors.New("not implemented")
+	return ErrNotImplemented
 }
 
 // Endpoints is not implemented.
 func (msb MariadbServiceBinder) Endpoints(ctx context.Context, instanceID string) ([]Endpoint, error) {
-	return nil, errors.New("not implemented")
+	return nil, ErrNotImplemented
 }
 
 // Deprovision removes the downstream namespace and checks if no DBs exist for this instance anymore.
