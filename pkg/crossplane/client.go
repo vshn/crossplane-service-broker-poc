@@ -11,6 +11,7 @@ import (
 	helmv1alpha1 "github.com/crossplane-contrib/provider-helm/apis/release/v1alpha1"
 	"github.com/crossplane-contrib/provider-helm/apis/v1alpha1"
 	helmclient "github.com/crossplane-contrib/provider-helm/pkg/clients"
+	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	crossplane "github.com/crossplane/crossplane/apis"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -110,7 +111,7 @@ func (cp *Crossplane) GetDownstreamClientForHelmRelease(ctx context.Context, rel
 		return nil, errors.New("nil secret data")
 	}
 
-	config, err := helmclient.NewRestConfig(s.Data)
+	config, err := helmclient.NewRestConfig(s.Data[runtimev1alpha1.ResourceCredentialsSecretKubeconfigKey])
 	if err != nil {
 		return nil, err
 	}
