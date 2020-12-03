@@ -9,7 +9,7 @@ require (
 	github.com/crossplane/crossplane-runtime v0.11.0
 	github.com/drewolson/testflight v1.0.0 // indirect
 	github.com/go-logr/logr v0.3.0 // indirect
-	github.com/gorilla/mux v1.7.3
+	github.com/gorilla/mux v1.8.0
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.0
 	github.com/pivotal-cf/brokerapi v6.4.2+incompatible
