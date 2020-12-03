@@ -59,7 +59,17 @@ docker:
 	@echo built image $(IMAGE_NAME)
 
 .PHONY: lint
-lint: lint_yaml
+lint: fmt vet lint_yaml
+	@echo 'Check for uncommitted changes ...'
+	git diff --exit-code
+
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
+.PHONY: vet
+vet:
+	go vet ./...
 
 .PHONY: lint_yaml
 lint_yaml: $(YAML_FILES)
