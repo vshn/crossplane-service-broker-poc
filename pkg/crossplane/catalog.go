@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"code.cloudfoundry.org/lager"
-	"github.com/pivotal-cf/brokerapi/domain"
+	"github.com/pivotal-cf/brokerapi/v7/domain"
 	"k8s.io/utils/pointer"
 )
 

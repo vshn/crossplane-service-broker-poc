@@ -9,7 +9,7 @@ import (
 	"code.cloudfoundry.org/lager"
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composite"
-	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
