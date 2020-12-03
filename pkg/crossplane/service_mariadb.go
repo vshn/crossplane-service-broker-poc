@@ -95,7 +95,7 @@ func (msb MariadbServiceBinder) Unbind(_ context.Context, _ string) error {
 
 // Endpoints is not implemented.
 func (msb MariadbServiceBinder) Endpoints(ctx context.Context, instanceID string) ([]Endpoint, error) {
-	return nil, ErrNotImplemented
+	return []Endpoint{}, nil
 }
 
 // Deprovision removes the downstream namespace and checks if no DBs exist for this instance anymore.
