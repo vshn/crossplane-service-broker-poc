@@ -10,7 +10,7 @@ import (
 	helmv1alpha1 "github.com/crossplane-contrib/provider-helm/apis/release/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composite"
 	"github.com/crossplane/crossplane/apis/apiextensions/v1beta1"
-	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"

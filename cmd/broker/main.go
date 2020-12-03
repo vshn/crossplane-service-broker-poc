@@ -19,9 +19,9 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
-	api "github.com/pivotal-cf/brokerapi"
-	"github.com/pivotal-cf/brokerapi/auth"
-	"github.com/pivotal-cf/brokerapi/middlewares"
+	api "github.com/pivotal-cf/brokerapi/v7"
+	"github.com/pivotal-cf/brokerapi/v7/auth"
+	"github.com/pivotal-cf/brokerapi/v7/middlewares"
 )
 
 const (

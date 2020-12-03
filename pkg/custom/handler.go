@@ -1,10 +1,12 @@
 package custom
 
 import (
-	"broker/pkg/crossplane"
-	"code.cloudfoundry.org/lager"
-	"github.com/pivotal-cf/brokerapi/domain/apiresponses"
 	"net/http"
+
+	"broker/pkg/crossplane"
+
+	"code.cloudfoundry.org/lager"
+	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 )
 
 type APIHandler struct {
