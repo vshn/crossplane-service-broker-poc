@@ -77,7 +77,9 @@ func (msb MariadbServiceBinder) FinishProvision(ctx context.Context) error {
 // Bind is not implemented.
 func (msb MariadbServiceBinder) Bind(_ context.Context, _ string) (Credentials, error) {
 	return nil, apiresponses.NewFailureResponseBuilder(
-		fmt.Errorf("binding is not supported by this service"),
+		fmt.Errorf("Service MariaDB Galera Cluster is not bindable. "+
+			"You can create a bindable database on this cluster using "+
+			"cf create-service mariadb-k8s-database default my-mariadb-db -c '{\"parent_reference\": %q}'", msb.instanceID),
 		http.StatusUnprocessableEntity,
 		"binding-not-supported",
 	).WithErrorKey("BindingNotSupported").Build()
