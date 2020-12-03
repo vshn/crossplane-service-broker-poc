@@ -162,11 +162,10 @@ github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwc
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
-github.com/crossplane-contrib/provider-helm v0.3.7 h1:5Nx/lZ5ic8XGb9xkC7HqZ4JeNi4e/tTlA2/NEF6tV54=
-github.com/crossplane-contrib/provider-helm v0.3.7/go.mod h1:AQJcXXBV/IH0mgOFMRfFIpW/ifElVNlAtL6ROXnN7V0=
+github.com/crossplane-contrib/provider-helm v0.4.0 h1:Quck9Nd3OQWghEGhh5i5rTR7UVpK1cP5HC4X9/3cPwM=
+github.com/crossplane-contrib/provider-helm v0.4.0/go.mod h1:cwni5ka0oAItdgRW5h8ING+4EVFnLV7mDfnKonNfFmo=
 github.com/crossplane/crossplane v0.14.0 h1:v5Gpn6DXIRuVKeSlhskqMF4OwndB5tvsCUKoVyFoo5Y=
 github.com/crossplane/crossplane v0.14.0/go.mod h1:uVWqe1zjbtuMjo+594V0+KfLn8L111ZmkTFDhFuO6Nw=
-github.com/crossplane/crossplane-runtime v0.10.0/go.mod h1:cJl5ZZONisre4v6wTmbrC8Jh3AI+erq/lNaxZzv9tnU=
 github.com/crossplane/crossplane-runtime v0.11.0 h1:hLDWsGYhU/CUVQ1sU7NHF5bnP6WT6wA6Nu2SaBSSe6w=
 github.com/crossplane/crossplane-runtime v0.11.0/go.mod h1:cJl5ZZONisre4v6wTmbrC8Jh3AI+erq/lNaxZzv9tnU=
 github.com/crossplane/crossplane-tools v0.0.0-20201007233256-88b291e145bb h1:j09j/Gk1qH64HUtf/fcTjMAxLxUdOuQXySWu46WTVTU=
