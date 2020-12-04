@@ -196,6 +196,7 @@ func loggerMiddleware(logger lager.Logger) mux.MiddlewareFunc {
 				"correlation-id": id,
 				"headers":        headers,
 				"URI":            req.RequestURI,
+				"method":         req.Method,
 			}).Debug("debug-headers")
 			next.ServeHTTP(w, req)
 		})
