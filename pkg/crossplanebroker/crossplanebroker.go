@@ -9,6 +9,7 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/pivotal-cf/brokerapi/v7/domain"
 	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v7/middlewares"
@@ -278,10 +279,15 @@ func (b *CrossplaneBroker) GetInstance(ctx context.Context, instanceID string) (
 		return domain.GetInstanceDetailsSpec{}, convertError(ctx, err)
 	}
 
+	params, err := fieldpath.Pave(instance.Object).GetValue(crossplane.InstanceSpecParamsPath)
+	if err != nil {
+		return domain.GetInstanceDetailsSpec{}, err
+	}
+
 	spec := domain.GetInstanceDetailsSpec{
 		PlanID:     instance.GetCompositionReference().Name,
 		ServiceID:  instance.GetLabels()[crossplane.ServiceIDLabel],
-		Parameters: (instance.Object["spec"].(map[string]interface{}))["parameters"],
+		Parameters: params,
 	}
 	return spec, nil
 }

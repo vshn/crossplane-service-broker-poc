@@ -10,7 +10,6 @@ require (
 	github.com/go-logr/logr v0.3.0 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/mattn/go-isatty v0.0.12 // indirect
-	github.com/mitchellh/mapstructure v1.4.0
 	github.com/pivotal-cf/brokerapi/v7 v7.4.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 // indirect

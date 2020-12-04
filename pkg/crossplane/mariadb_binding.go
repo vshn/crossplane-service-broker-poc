@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"code.cloudfoundry.org/lager"
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/crossplane-runtime/pkg/password"
 	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composite"
 	corev1 "k8s.io/api/core/v1"
@@ -60,11 +62,11 @@ func (cp *Crossplane) createBinding(ctx context.Context, bindingID, instanceID, 
 	cmp.SetCompositionReference(&corev1.ObjectReference{
 		Name: planName,
 	})
-
-	(cmp.Object["spec"].(map[string]interface{}))["parameters"] = map[string]interface{}{
-		"parent_reference": parentReference,
+	if err := fieldpath.Pave(cmp.Object).SetValue(instanceSpecParamsParentReferencePath, parentReference); err != nil {
+		return "", err
 	}
 
+	cp.logger.Debug("create-binding", lager.Data{"instance": cmp})
 	err = cp.Client.Create(ctx, cmp)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return "", err
