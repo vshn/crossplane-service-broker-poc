@@ -7,8 +7,8 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composite"
-	"github.com/mitchellh/mapstructure"
 	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -41,19 +41,9 @@ func (msb MariadbDatabaseServiceBinder) FinishProvision(ctx context.Context) err
 	return nil
 }
 
-type compositeMariaDBDatabaseInstanceSpecParameters struct {
-	ParentReference string `mapstructure:"parent_reference" json:"parent_reference,omitempty"`
-}
-type compositeMariaDBDatabaseInstanceSpec struct {
-	Parameters compositeMariaDBDatabaseInstanceSpecParameters `json:"parameters"`
-}
-type compositeMariaDBDatabaseInstance struct {
-	Spec compositeMariaDBDatabaseInstanceSpec `json:"spec"`
-}
-
 // Bind creates a MariaDB binding composite.
 func (msb MariadbDatabaseServiceBinder) Bind(ctx context.Context, bindingID string) (Credentials, error) {
-	inst, err := msb.parseDBInstance()
+	parentRef, err := msb.parseDBInstance()
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +52,14 @@ func (msb MariadbDatabaseServiceBinder) Bind(ctx context.Context, bindingID stri
 		ctx,
 		bindingID,
 		msb.instance.GetLabels()[InstanceIDLabel],
-		inst.Spec.Parameters.ParentReference,
+		parentRef,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	// In order to directly return the credentials we need to get the IP/port for this instance.
-	secret, err := msb.cp.getSecret(ctx, spksNamespace, inst.Spec.Parameters.ParentReference)
+	secret, err := msb.cp.getSecret(ctx, spksNamespace, parentRef)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			err = ErrInstanceNotReady
@@ -116,12 +106,12 @@ func (msb MariadbDatabaseServiceBinder) Unbind(ctx context.Context, bindingID st
 
 // Endpoints returns the accessible endpoints for the db instance.
 func (msb MariadbDatabaseServiceBinder) Endpoints(ctx context.Context, instanceID string) ([]Endpoint, error) {
-	inst, err := msb.parseDBInstance()
+	parentRef, err := msb.parseDBInstance()
 	if err != nil {
 		return nil, err
 	}
 
-	secret, err := msb.cp.getSecret(ctx, spksNamespace, inst.Spec.Parameters.ParentReference)
+	secret, err := msb.cp.getSecret(ctx, spksNamespace, parentRef)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			err = ErrInstanceNotReady
@@ -143,13 +133,12 @@ func (msb MariadbDatabaseServiceBinder) Deprovision(ctx context.Context) error {
 	return nil
 }
 
-func (msb MariadbDatabaseServiceBinder) parseDBInstance() (*compositeMariaDBDatabaseInstance, error) {
-	inst := &compositeMariaDBDatabaseInstance{}
-
-	if err := mapstructure.Decode(msb.instance.Object, &inst); err != nil {
-		return nil, fmt.Errorf("illegal instance %w", err)
+func (msb MariadbDatabaseServiceBinder) parseDBInstance() (string, error) {
+	parentReference, err := fieldpath.Pave(msb.instance.Object).GetString(instanceSpecParamsParentReferencePath)
+	if err != nil {
+		return "", err
 	}
-	return inst, nil
+	return parentReference, nil
 }
 
 func mapMariadbEndpoint(data map[string][]byte) (*Endpoint, error) {

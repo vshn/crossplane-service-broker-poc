@@ -7,12 +7,23 @@ import (
 	"fmt"
 
 	"code.cloudfoundry.org/lager"
+	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composite"
 	"github.com/crossplane/crossplane/apis/apiextensions/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+)
+
+const (
+	// InstanceSpecParamsPath is the path to an instance's parameters
+	InstanceSpecParamsPath = "spec.parameters"
+
+	// instanceParamsParentReferenceName is the name of an instance's parent reference parameter
+	instanceParamsParentReferenceName = "parent_reference"
+	// instanceSpecParamsParentReferencePath is the path to an instance's parent reference parameter
+	instanceSpecParamsParentReferencePath = InstanceSpecParamsPath + "." + instanceParamsParentReferenceName
 )
 
 // ErrInstanceNotFound is an instance doesn't exist
@@ -39,16 +50,23 @@ func (cp *Crossplane) CreateInstance(ctx context.Context, instanceID string, par
 	cmp.SetCompositionReference(&corev1.ObjectReference{
 		Name: plan.Name,
 	})
-	spec := &compositeMariaDBDatabaseInstanceSpec{}
+	parametersMap := map[string]interface{}{}
 	if parameters != nil {
-		if err := json.Unmarshal(parameters, &spec.Parameters); err == nil {
+		if err := json.Unmarshal(parameters, &parametersMap); err != nil {
+			return err
+		}
+		if parentReference, err := fieldpath.
+			Pave(parametersMap).
+			GetString(instanceParamsParentReferenceName); err == nil {
 			// Set parent reference in a label so we can search for it later.
-			labels[ParentIDLabel] = spec.Parameters.ParentReference
+			labels[ParentIDLabel] = parentReference
 		}
 	}
-	cmp.Object["spec"] = spec
+	if err := fieldpath.Pave(cmp.Object).SetValue(InstanceSpecParamsPath, parametersMap); err != nil {
+		return err
+	}
 	cmp.SetLabels(labels)
-	cp.logger.Info("Create instance", lager.Data{"instance": instanceID})
+	cp.logger.Debug("create-instance", lager.Data{"instance": cmp})
 	return cp.Client.Create(ctx, cmp)
 }
 
