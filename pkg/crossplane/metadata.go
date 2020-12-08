@@ -1,5 +1,16 @@
 package crossplane
 
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v7/middlewares"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+)
+
 const (
 	// SynToolsBase is the base domain
 	SynToolsBase = "service.syn.tools"
@@ -30,3 +41,28 @@ const (
 	// DeletedLabel marks an object as deleted to clean up
 	DeletedLabel = SynToolsBase + "/deleted"
 )
+
+// ConvertError converts an error to a proper API error
+func ConvertError(ctx context.Context, err error) error {
+	var kErr *k8serrors.StatusError
+	if errors.As(err, &kErr) {
+		err = apiresponses.NewFailureResponseBuilder(
+			kErr,
+			int(kErr.ErrStatus.Code),
+			"invalid",
+		).WithErrorKey(string(kErr.ErrStatus.Reason)).Build()
+	}
+	id, ok := ctx.Value(middlewares.CorrelationIDKey).(string)
+	if !ok {
+		id = "unknown"
+	}
+	var apiErr *apiresponses.FailureResponse
+	if errors.As(err, &apiErr) {
+		return apiErr.AppendErrorMessage(fmt.Sprintf("(correlation-id: %q)", id))
+	}
+	return apiresponses.NewFailureResponseBuilder(
+		fmt.Errorf("%w (correlation-id: %q)", err, id),
+		http.StatusInternalServerError,
+		"internal-server-error",
+	).WithErrorKey(string(kErr.ErrStatus.Reason)).Build()
+}
