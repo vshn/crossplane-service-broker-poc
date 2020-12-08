@@ -170,7 +170,7 @@ func readAppConfig() (*appConfig, error) {
 	if err != nil {
 		wt = 180 * time.Second
 	}
-	cfg.readTimeout = wt
+	cfg.writeTimeout = wt
 
 	mhb, err := strconv.Atoi(os.Getenv("OSB_HTTP_MAX_HEADER_BYTES"))
 	if err != nil {
