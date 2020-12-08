@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v7/middlewares"
@@ -59,5 +60,9 @@ func ConvertError(ctx context.Context, err error) error {
 	if errors.As(err, &apiErr) {
 		return apiErr.AppendErrorMessage(fmt.Sprintf("(correlation-id: %q)", id))
 	}
-	return fmt.Errorf("%w (correlation-id: %q)", err, id)
+	return apiresponses.NewFailureResponseBuilder(
+		fmt.Errorf("%w (correlation-id: %q)", err, id),
+		http.StatusInternalServerError,
+		"internal-server-error",
+	).WithErrorKey(string(kErr.ErrStatus.Reason)).Build()
 }
