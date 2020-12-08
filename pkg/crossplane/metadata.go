@@ -10,6 +10,8 @@ const (
 	MetadataAnnotation = SynToolsBase + "/metadata"
 	// DeletionTimestampAnnotation marks when an object got deleted
 	DeletionTimestampAnnotation = SynToolsBase + "/deletionTimestamp"
+	// TagsAnnotation of the instance
+	TagsAnnotation = SynToolsBase + "/tags"
 )
 
 const (
