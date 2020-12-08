@@ -59,6 +59,13 @@ func (cp *Crossplane) getServicesForBroker(ctx context.Context) ([]domain.Servic
 			}
 		}
 
+		var tags []string
+		if tagAnnotation, ok := xrd.Annotations[TagsAnnotation]; ok {
+			if err := json.Unmarshal([]byte(tagAnnotation), &tags); err != nil {
+				cp.logger.Error("parse-tags", err)
+			}
+		}
+
 		services = append(services, domain.Service{
 			ID:                   serviceID,
 			Name:                 serviceName,
@@ -69,6 +76,7 @@ func (cp *Crossplane) getServicesForBroker(ctx context.Context) ([]domain.Servic
 			PlanUpdatable:        false,
 			Plans:                plans,
 			Metadata:             meta,
+			Tags:                 tags,
 		})
 	}
 
