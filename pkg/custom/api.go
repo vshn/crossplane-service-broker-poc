@@ -1,6 +1,8 @@
 package custom
 
 import (
+	"broker/pkg/crossplane"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -60,12 +62,13 @@ func (a API) respond(w http.ResponseWriter, status int, response interface{}) {
 	}
 }
 
-func (a API) handleAPIError(w http.ResponseWriter, err error) {
+func (a API) handleAPIError(ctx context.Context, w http.ResponseWriter, err error) {
 	var ae APIError
 	if errors.As(err, &ae) {
 		a.respond(w, ae.code, ae.err)
 		return
 	}
+	err = crossplane.ConvertError(ctx, err)
 	a.respond(w, http.StatusInternalServerError, apiresponses.ErrorResponse{Error: err.Error()})
 }
 
@@ -75,7 +78,7 @@ func (a API) Endpoints(w http.ResponseWriter, req *http.Request) {
 
 	r, err := a.handler.Endpoints(req.Context(), instanceID)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 		return
 	}
 	a.respond(w, http.StatusOK, r)
@@ -87,7 +90,7 @@ func (a API) ServiceUsage(w http.ResponseWriter, req *http.Request) {
 
 	r, err := a.handler.ServiceUsage(req.Context(), instanceID)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 		return
 	}
 	a.respond(w, http.StatusOK, r)
@@ -97,7 +100,7 @@ func (a API) CreateUpdateServiceDefinition(w http.ResponseWriter, req *http.Requ
 	var sd ServiceDefinitionRequest
 	err := json.NewDecoder(req.Body).Decode(&sd)
 	if err != nil {
-		a.handleAPIError(w, APIError{
+		a.handleAPIError(req.Context(), w, APIError{
 			code: http.StatusBadRequest,
 			err: apiresponses.ErrorResponse{
 				Error: err.Error(),
@@ -109,7 +112,7 @@ func (a API) CreateUpdateServiceDefinition(w http.ResponseWriter, req *http.Requ
 
 	err = a.handler.CreateUpdateServiceDefinition(req.Context(), &sd)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 	}
 	a.respond(w, http.StatusNoContent, nil)
 }
@@ -120,7 +123,7 @@ func (a API) DeleteServiceDefinition(w http.ResponseWriter, req *http.Request) {
 
 	err := a.handler.DeleteServiceDefinition(req.Context(), id)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 		return
 	}
 	a.respond(w, http.StatusNoContent, nil)
@@ -133,7 +136,7 @@ func (a API) CreateBackup(w http.ResponseWriter, req *http.Request) {
 	var br BackupRequest
 	err := json.NewDecoder(req.Body).Decode(&br)
 	if err != nil {
-		a.handleAPIError(w, APIError{
+		a.handleAPIError(req.Context(), w, APIError{
 			code: http.StatusBadRequest,
 			err: apiresponses.ErrorResponse{
 				Error: err.Error(),
@@ -144,7 +147,7 @@ func (a API) CreateBackup(w http.ResponseWriter, req *http.Request) {
 
 	b, err := a.handler.CreateBackup(req.Context(), instanceID, &br)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 	}
 	a.respond(w, http.StatusCreated, b)
 }
@@ -156,7 +159,7 @@ func (a API) DeleteBackup(w http.ResponseWriter, req *http.Request) {
 
 	r, err := a.handler.DeleteBackup(req.Context(), instanceID, backupID)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 		return
 	}
 	a.respond(w, http.StatusOK, r)
@@ -169,7 +172,7 @@ func (a API) Backup(w http.ResponseWriter, req *http.Request) {
 
 	r, err := a.handler.Backup(req.Context(), instanceID, backupID)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 		return
 	}
 	a.respond(w, http.StatusOK, r)
@@ -181,7 +184,7 @@ func (a API) ListBackups(w http.ResponseWriter, req *http.Request) {
 
 	r, err := a.handler.ListBackups(req.Context(), instanceID)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 		return
 	}
 	a.respond(w, http.StatusOK, r)
@@ -195,7 +198,7 @@ func (a API) RestoreBackup(w http.ResponseWriter, req *http.Request) {
 	var restore RestoreRequest
 	err := json.NewDecoder(req.Body).Decode(&restore)
 	if err != nil {
-		a.handleAPIError(w, APIError{
+		a.handleAPIError(req.Context(), w, APIError{
 			code: http.StatusBadRequest,
 			err: apiresponses.ErrorResponse{
 				Error: err.Error(),
@@ -206,7 +209,7 @@ func (a API) RestoreBackup(w http.ResponseWriter, req *http.Request) {
 
 	r, err := a.handler.RestoreBackup(req.Context(), instanceID, backupID, &restore)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 		return
 	}
 	a.respond(w, http.StatusOK, r)
@@ -220,7 +223,7 @@ func (a API) RestoreStatus(w http.ResponseWriter, req *http.Request) {
 
 	r, err := a.handler.RestoreStatus(req.Context(), instanceID, backupID, restoreID)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 		return
 	}
 	a.respond(w, http.StatusOK, r)
@@ -232,7 +235,7 @@ func (a API) APIDocs(w http.ResponseWriter, req *http.Request) {
 
 	r, err := a.handler.APIDocs(req.Context(), instanceID)
 	if err != nil {
-		a.handleAPIError(w, err)
+		a.handleAPIError(req.Context(), w, err)
 		return
 	}
 	a.respond(w, http.StatusOK, r)
