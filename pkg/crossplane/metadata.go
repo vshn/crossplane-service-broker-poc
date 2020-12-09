@@ -40,6 +40,8 @@ const (
 	BindableLabel = SynToolsBase + "/bindable"
 	// DeletedLabel marks an object as deleted to clean up
 	DeletedLabel = SynToolsBase + "/deleted"
+	// ClusterLabel name of the cluster this instance is deployed to
+	ClusterLabel = SynToolsBase + "/cluster"
 )
 
 // ConvertError converts an error to a proper API error
