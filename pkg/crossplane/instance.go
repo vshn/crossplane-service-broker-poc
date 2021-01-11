@@ -35,7 +35,13 @@ func (cp *Crossplane) CreateInstance(ctx context.Context, instanceID string, par
 		InstanceIDLabel: instanceID,
 	}
 	// Copy relevant labels from plan
-	for _, l := range []string{ServiceIDLabel, ServiceNameLabel, PlanNameLabel, ClusterLabel} {
+	for _, l := range []string{
+		ServiceIDLabel,
+		ServiceNameLabel,
+		PlanNameLabel,
+		ClusterLabel,
+		SLALabel,
+	} {
 		labels[l] = plan.Labels[l]
 	}
 

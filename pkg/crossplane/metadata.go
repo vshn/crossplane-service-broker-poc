@@ -42,6 +42,8 @@ const (
 	DeletedLabel = SynToolsBase + "/deleted"
 	// ClusterLabel name of the cluster this instance is deployed to
 	ClusterLabel = SynToolsBase + "/cluster"
+	// SLALabel SLA level for this instance
+	SLALabel = SynToolsBase + "/sla"
 )
 
 // ConvertError converts an error to a proper API error
