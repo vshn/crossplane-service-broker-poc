@@ -165,7 +165,7 @@ func createCredentials(endpoint *Endpoint, username, password, database string) 
 		"host":     endpoint.Host,
 		"hostname": endpoint.Host,
 		runtimev1alpha1.ResourceCredentialsSecretPortKey: endpoint.Port,
-		"name":     username,
+		"name":     database,
 		"database": database,
 		runtimev1alpha1.ResourceCredentialsSecretUserKey:     username,
 		runtimev1alpha1.ResourceCredentialsSecretPasswordKey: password,
