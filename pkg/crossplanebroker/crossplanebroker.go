@@ -3,6 +3,7 @@ package crossplanebroker
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"broker/pkg/crossplane"
 
@@ -227,7 +228,19 @@ func (b *CrossplaneBroker) Update(ctx context.Context, instanceID string, detail
 	logger := requestScopedLogger(ctx, b.logger).WithData(lager.Data{"instance-id": instanceID})
 	logger.Info("update-service-instance", lager.Data{"plan-id": details.PlanID, "service-id": details.ServiceID})
 
-	return domain.UpdateServiceSpec{}, crossplane.ErrNotImplemented
+	spec := domain.UpdateServiceSpec{}
+
+	if err := b.c.UpdateInstanceSLA(ctx, instanceID, details.ServiceID, details.PlanID); err != nil {
+		switch err {
+		case crossplane.ErrSLAChangeNotPermitted, crossplane.ErrClusterChangeNotPermitted, crossplane.ErrServiceUpdateNotPermitted:
+			err = apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, "update-instance-failed")
+		case crossplane.ErrInstanceNotFound:
+			err = apiresponses.ErrInstanceDoesNotExist
+		}
+		return spec, crossplane.ConvertError(ctx, err)
+	}
+
+	return spec, nil
 }
 
 // GetBinding returns a previously created binding

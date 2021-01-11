@@ -49,6 +49,13 @@ $ eden bind --instance my-test-redis
 $ eden credentials #...
 ```
 
+#### Update instance
+
+```console
+# ensure to either export or replace the $INSTANCE_UUID/SERVICE_UUID/PLAN_UUID variable:
+$ curl -X PATCH 'http://localhost:8080/v2/service_instances/'"$INSTANCE_UUID" -u test:TEST -v -d '{"service_id": "'$SERVICE_UUID'", "plan_id": "'$PLAN_UUID'"}' -H 'X-Broker-API-Version: 2.13'
+```
+
 ### Custom APIs
 
 This implementation contains a couple of custom APIs, not defined by the OSB spec.

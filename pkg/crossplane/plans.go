@@ -6,6 +6,7 @@ import (
 
 	"github.com/crossplane/crossplane/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,4 +41,12 @@ func (cp *Crossplane) GetPlan(ctx context.Context, planID string) (*v1beta1.Comp
 	}
 
 	return composition, nil
+}
+
+func gvkFromPlan(plan *v1beta1.Composition) (schema.GroupVersionKind, error) {
+	groupVersion, err := schema.ParseGroupVersion(plan.Spec.CompositeTypeRef.APIVersion)
+	if err != nil {
+		return schema.GroupVersionKind{}, err
+	}
+	return groupVersion.WithKind(plan.Spec.CompositeTypeRef.Kind), nil
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/crossplane/crossplane/apis/apiextensions/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -26,8 +25,16 @@ const (
 	instanceSpecParamsParentReferencePath = InstanceSpecParamsPath + "." + instanceParamsParentReferenceName
 )
 
-// ErrInstanceNotFound is an instance doesn't exist
-var ErrInstanceNotFound = errors.New("instance not found")
+var (
+	// ErrInstanceNotFound is an instance doesn't exist
+	ErrInstanceNotFound = errors.New("instance not found")
+	// ErrServiceUpdateNotPermitted when updating an instance
+	ErrServiceUpdateNotPermitted = errors.New("service update not permitted")
+	// ErrClusterChangeNotPermitted when updating an instance
+	ErrClusterChangeNotPermitted = errors.New("cluster change not permitted")
+	// ErrSLAChangeNotPermitted when updating an instance's SLA plan (only premium<->standard is permitted)
+	ErrSLAChangeNotPermitted = errors.New("SLA change not permitted")
+)
 
 // CreateInstance creates a service instance
 func (cp *Crossplane) CreateInstance(ctx context.Context, instanceID string, parameters json.RawMessage, plan *v1beta1.Composition) error {
@@ -45,11 +52,10 @@ func (cp *Crossplane) CreateInstance(ctx context.Context, instanceID string, par
 		labels[l] = plan.Labels[l]
 	}
 
-	groupVersion, err := schema.ParseGroupVersion(plan.Spec.CompositeTypeRef.APIVersion)
+	gvk, err := gvkFromPlan(plan)
 	if err != nil {
 		return err
 	}
-	gvk := groupVersion.WithKind(plan.Spec.CompositeTypeRef.Kind)
 
 	cmp := composite.New(composite.WithGroupVersionKind(gvk))
 	cmp.SetName(instanceID)
@@ -78,11 +84,10 @@ func (cp *Crossplane) CreateInstance(ctx context.Context, instanceID string, par
 
 // DeleteInstance deletes a service instance
 func (cp *Crossplane) DeleteInstance(ctx context.Context, instanceName string, plan *v1beta1.Composition) error {
-	groupVersion, err := schema.ParseGroupVersion(plan.Spec.CompositeTypeRef.APIVersion)
+	gvk, err := gvkFromPlan(plan)
 	if err != nil {
 		return err
 	}
-	gvk := groupVersion.WithKind(plan.Spec.CompositeTypeRef.Kind)
 
 	cmp := composite.New(composite.WithGroupVersionKind(gvk))
 	cmp.SetName(instanceName)
@@ -104,11 +109,10 @@ func (cp *Crossplane) InstanceExists(ctx context.Context, instanceID string, pla
 
 // GetInstanceWithPlan returns the instance with a given ID for a given plan
 func (cp *Crossplane) GetInstanceWithPlan(ctx context.Context, instanceID string, plan *v1beta1.Composition) (*composite.Unstructured, error) {
-	groupVersion, err := schema.ParseGroupVersion(plan.Spec.CompositeTypeRef.APIVersion)
+	gvk, err := gvkFromPlan(plan)
 	if err != nil {
 		return nil, err
 	}
-	gvk := groupVersion.WithKind(plan.Spec.CompositeTypeRef.Kind)
 
 	cmp := composite.New(composite.WithGroupVersionKind(gvk))
 	cmp.SetName(instanceID)
@@ -150,4 +154,71 @@ func (cp *Crossplane) GetInstance(ctx context.Context, instanceID string) (*comp
 
 	}
 	return nil, ErrInstanceNotFound
+}
+
+// UpdateInstanceSLA updates the SLA of an instance specified by the supplied planID.
+// Only SLA changes are allowed, any other change is not permitted and yields an error.
+func (cp *Crossplane) UpdateInstanceSLA(ctx context.Context, instanceID, serviceID, planID string) error {
+	instance, err := cp.GetInstance(ctx, instanceID)
+	if err != nil {
+		return err
+	}
+
+	instanceLabels := instance.GetLabels()
+	if serviceID != instanceLabels[ServiceIDLabel] {
+		return ErrServiceUpdateNotPermitted
+	}
+
+	newPlan, err := cp.GetPlan(ctx, planID)
+	if err != nil {
+		return err
+	}
+
+	slaChangePermitted := func() bool {
+		instanceSLA := instanceLabels[SLALabel]
+		newPlanSLA := newPlan.Labels[SLALabel]
+		instancePlanLevel := getPlanLevel(instanceLabels[PlanNameLabel])
+		newPlanLevel := getPlanLevel(newPlan.Labels[PlanNameLabel])
+		instanceService := instanceLabels[ServiceIDLabel]
+		newPlanService := newPlan.Labels[ServiceIDLabel]
+
+		// switch from redis to mariadb not permitted
+		if instanceService != newPlanService {
+			return false
+		}
+		// xsmall -> large not permitted, only xsmall <-> xsmall-premium
+		if instancePlanLevel != newPlanLevel {
+			return false
+		}
+		if instanceSLA == SLAPremium && newPlanSLA == SLAStandard {
+			return true
+		}
+		if instanceSLA == SLAStandard && newPlanSLA == SLAPremium {
+			return true
+		}
+		return false
+	}
+
+	if !slaChangePermitted() {
+		return ErrSLAChangeNotPermitted
+	}
+
+	instance.SetCompositionReference(&corev1.ObjectReference{
+		Name: newPlan.Name,
+	})
+	for _, l := range []string{
+		PlanNameLabel,
+		SLALabel,
+	} {
+		instanceLabels[l] = newPlan.Labels[l]
+	}
+	instance.SetLabels(instanceLabels)
+
+	gvk, err := gvkFromPlan(newPlan)
+	if err != nil {
+		return err
+	}
+	instance.SetGroupVersionKind(gvk)
+
+	return cp.Client.Update(ctx, instance.GetUnstructured())
 }
