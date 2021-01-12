@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/pivotal-cf/brokerapi/v7/domain/apiresponses"
 	"github.com/pivotal-cf/brokerapi/v7/middlewares"
@@ -46,6 +47,13 @@ const (
 	SLALabel = SynToolsBase + "/sla"
 )
 
+const (
+	// SLAPremium represents the string for the premium SLA
+	SLAPremium = "premium"
+	// SLAStandard represents the string for the standard SLA
+	SLAStandard = "standard"
+)
+
 // ConvertError converts an error to a proper API error
 func ConvertError(ctx context.Context, err error) error {
 	var kErr *k8serrors.StatusError
@@ -68,5 +76,10 @@ func ConvertError(ctx context.Context, err error) error {
 		fmt.Errorf("%w (correlation-id: %q)", err, id),
 		http.StatusInternalServerError,
 		"internal-server-error",
-	).WithErrorKey(string(kErr.ErrStatus.Reason)).Build()
+	).Build()
+}
+
+func getPlanLevel(name string) string {
+	tmp := strings.Split(name, "-")
+	return tmp[0]
 }
