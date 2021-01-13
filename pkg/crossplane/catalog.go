@@ -58,6 +58,13 @@ func (cp *Crossplane) getServicesForBroker(ctx context.Context) ([]domain.Servic
 				cp.logger.Error("parse-bindable", err)
 			}
 		}
+		updatable := false
+		if b, ok := xrd.Labels[UpdatableLabel]; ok {
+			updatable, err = strconv.ParseBool(b)
+			if err != nil {
+				cp.logger.Error("parse-updatable", err)
+			}
+		}
 
 		var tags []string
 		if tagAnnotation, ok := xrd.Annotations[TagsAnnotation]; ok {
@@ -73,7 +80,7 @@ func (cp *Crossplane) getServicesForBroker(ctx context.Context) ([]domain.Servic
 			Bindable:             bindable,
 			InstancesRetrievable: true,
 			BindingsRetrievable:  bindable,
-			PlanUpdatable:        false,
+			PlanUpdatable:        updatable,
 			Plans:                plans,
 			Metadata:             meta,
 			Tags:                 tags,
