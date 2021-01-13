@@ -39,6 +39,8 @@ const (
 	ParentIDLabel = SynToolsBase + "/parent"
 	// BindableLabel of the instance
 	BindableLabel = SynToolsBase + "/bindable"
+	// UpdatableLabel of the instance
+	UpdatableLabel = SynToolsBase + "/updatable"
 	// DeletedLabel marks an object as deleted to clean up
 	DeletedLabel = SynToolsBase + "/deleted"
 	// ClusterLabel name of the cluster this instance is deployed to
