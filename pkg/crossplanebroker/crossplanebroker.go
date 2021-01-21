@@ -212,16 +212,17 @@ func (b *CrossplaneBroker) LastOperation(ctx context.Context, instanceID string,
 		if err != nil {
 			return domain.LastOperation{}, crossplane.ConvertError(ctx, err)
 		}
-		logger.Info("finish-provision")
 		if err := sb.FinishProvision(ctx); err != nil {
 			return domain.LastOperation{}, crossplane.ConvertError(ctx, err)
 		}
+		logger.WithData(lager.Data{"reason": condition.Reason, "message": condition.Message}).Info("provision-succeeded")
 	case v1alpha1.ReasonCreating:
 		op.State = domain.InProgress
 		logger.WithData(lager.Data{"reason": condition.Reason, "message": condition.Message}).Info("provision-in-progress")
 	case v1alpha1.ReasonUnavailable:
 	case v1alpha1.ReasonDeleting:
 		op.State = domain.Failed
+		logger.WithData(lager.Data{"reason": condition.Reason, "message": condition.Message}).Info("provision-failed")
 	}
 	return op, nil
 }
