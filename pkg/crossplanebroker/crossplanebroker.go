@@ -203,6 +203,7 @@ func (b *CrossplaneBroker) LastOperation(ctx context.Context, instanceID string,
 	condition := instance.GetCondition(v1alpha1.TypeReady)
 	op := domain.LastOperation{
 		Description: string(condition.Reason),
+		State:       domain.InProgress,
 	}
 	switch condition.Reason {
 	case v1alpha1.ReasonAvailable:
@@ -217,7 +218,9 @@ func (b *CrossplaneBroker) LastOperation(ctx context.Context, instanceID string,
 		}
 	case v1alpha1.ReasonCreating:
 		op.State = domain.InProgress
-	default:
+		logger.WithData(lager.Data{"reason": condition.Reason, "message": condition.Message}).Info("provision-in-progress")
+	case v1alpha1.ReasonUnavailable:
+	case v1alpha1.ReasonDeleting:
 		op.State = domain.Failed
 	}
 	return op, nil
