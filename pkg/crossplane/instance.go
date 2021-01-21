@@ -128,7 +128,6 @@ func (cp *Crossplane) GetInstanceWithPlan(ctx context.Context, instanceID string
 	}
 
 	if cmp.GetLabels()[PlanNameLabel] != plan.Labels[PlanNameLabel] {
-		cp.logger.Debug("instance-not-found-labels-dont-match", lager.Data{"instance-id": instanceID, "plan-labels": plan.Labels})
 		return nil, ErrInstanceNotFound
 	}
 
