@@ -202,9 +202,13 @@ func (b *CrossplaneBroker) LastOperation(ctx context.Context, instanceID string,
 
 	condition := instance.GetCondition(v1alpha1.TypeReady)
 	op := domain.LastOperation{
-		Description: string(condition.Reason),
+		Description: "Unknown",
 		State:       domain.InProgress,
 	}
+	if desc := string(condition.Reason); len(desc) > 0 {
+		op.Description = desc
+	}
+
 	switch condition.Reason {
 	case v1alpha1.ReasonAvailable:
 		op.State = domain.Succeeded
