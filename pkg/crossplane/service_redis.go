@@ -116,9 +116,12 @@ func (rsb RedisServiceBinder) Deprovision(ctx context.Context) error {
 }
 
 func mapRedisEndpoints(hcreds *HaProxyCredentials) (map[string]Endpoint, error) {
-	port, err := findPort(hcreds.Ports, "frontend")
+	port, err := findPort(hcreds.Ports, "redis")
 	if err != nil {
-		return nil, err
+		port, err = findPort(hcreds.Ports, "frontend")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	sentinelPort, err := findPort(hcreds.Ports, "sentinel")
