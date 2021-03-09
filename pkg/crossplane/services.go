@@ -149,6 +149,13 @@ func markNamespaceDeleted(ctx context.Context, c *Crossplane, instanceID string,
 		return fmt.Errorf("get namespace(%q): %w", instanceID, err)
 	}
 
+	if ns.Labels == nil {
+		ns.Labels = map[string]string{}
+	}
+	if ns.Annotations == nil {
+		ns.Annotations = map[string]string{}
+	}
+
 	ns.Labels[DeletedLabel] = "true"
 	ns.Annotations[DeletionTimestampAnnotation] = metav1.NowMicro().UTC().Format(metav1.RFC3339Micro)
 
