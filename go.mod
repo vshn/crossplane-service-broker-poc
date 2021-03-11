@@ -5,7 +5,7 @@ go 1.15
 require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/crossplane-contrib/provider-helm v0.4.0
-	github.com/crossplane/crossplane v0.14.0
+	github.com/crossplane/crossplane v1.1.0
 	github.com/crossplane/crossplane-runtime v0.11.0
 	github.com/go-logr/logr v0.3.0 // indirect
 	github.com/gorilla/mux v1.8.0
