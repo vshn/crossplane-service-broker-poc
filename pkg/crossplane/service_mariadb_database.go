@@ -101,7 +101,13 @@ func (msb MariadbDatabaseServiceBinder) GetBinding(ctx context.Context, bindingI
 
 // Unbind deletes the created User and Grant.
 func (msb MariadbDatabaseServiceBinder) Unbind(ctx context.Context, bindingID string) error {
-	return msb.cp.deleteBinding(ctx, bindingID)
+	if err := msb.cp.deleteBinding(ctx, bindingID); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return apiresponses.ErrBindingDoesNotExist
+		}
+		return err
+	}
+	return nil
 }
 
 // Endpoints returns the accessible endpoints for the db instance.
