@@ -3,6 +3,8 @@
 POC Code to provide an [Open Service Broker](https://github.com/openservicebrokerapi/servicebroker) API which provisions
 Redis and MariaDB instances via [crossplane](https://crossplane.io/).
 
+See the production implementation: https://github.com/vshn/crossplane-service-broker
+
 ## Usage
 
 ### Starting the broker
